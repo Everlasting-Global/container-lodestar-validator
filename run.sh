@@ -29,8 +29,8 @@ exec node /usr/app/packages/cli/bin/lodestar validator \
     --metrics.port=5064 \
     --beaconNodes="$BEACON_NODE_ADDRESS" \
     --builder="$BUILDER_API_ENABLED" \
-    --builder.selection="$BUILDER_SELECTION" \    
+    --builder.selection="$BUILDER_SELECTION" \
     --suggestedFeeRecipient="$FEE_RECIPIENT" \
     --graffiti="$GRAFFITI" \    
     --useProduceBlockV3=false
-    # --distributed \
+    
