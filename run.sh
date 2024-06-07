@@ -8,7 +8,7 @@ then
   BUILDER_SELECTION="builderonly"
 fi
 
-for f in /home/charon/validator_keys/keystore-*.json; do
+for f in /opt/data/validator_keys/keystore-*.json; do
     echo "Importing key ${f}"
 
     # Import keystore with password.
@@ -30,5 +30,7 @@ exec node /usr/app/packages/cli/bin/lodestar validator \
     --beaconNodes="$BEACON_NODE_ADDRESS" \
     --builder="$BUILDER_API_ENABLED" \
     --builder.selection="$BUILDER_SELECTION" \
-    --distributed \
+    # --distributed \
+    --suggestedFeeRecipient="$FEE_RECIPIENT" \
+    --graffiti="$GRAFFITI" \    
     --useProduceBlockV3=false
