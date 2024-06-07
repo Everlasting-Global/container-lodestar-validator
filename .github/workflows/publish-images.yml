@@ -50,6 +50,6 @@ jobs:
         uses: actions/attest-build-provenance@v1
         id: attest
         with:
-          subject-name: ghcr.io/${{ github.repository }}/prometheus
+          subject-name: ghcr.io/${{ github.repository }}/lodestar-validator
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
