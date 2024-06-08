@@ -30,7 +30,7 @@ exec node /usr/app/packages/cli/bin/lodestar validator \
     --beaconNodes="$BEACON_NODE_ADDRESS" \
     --builder="$BUILDER_API_ENABLED" \
     --builder.selection="$BUILDER_SELECTION" \
+    ${DISTRIBUTED:+--distributed} \
     --suggestedFeeRecipient="$FEE_RECIPIENT" \
     --graffiti="$GRAFFITI" \    
     --useProduceBlockV3=false
-    
