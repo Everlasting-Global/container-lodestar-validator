@@ -2,8 +2,9 @@
 name: Publish images
 
 on:
-  push:
-    branches: ['main']
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */3 * * *' # every 3 hours
 
 jobs:
   push_lodestar-validator:
@@ -16,9 +17,47 @@ jobs:
       id-token: write
       attestations: write
 
-    steps:
+    steps:      
+      # checks latest release from external repo
+      - id: base
+        uses: pozetroninc/github-action-get-latest-release@master
+        with:
+          repository: ChainSafe/lodestar
+          excludes: prerelease, draft
+      
+      - uses: action-pack/tag-exists@v1
+        id: check
+        with: 
+          tag: ${{ steps.base.outputs.release }}
+
+      - name: Set exit code for exists
+        if: ${{ steps.check.outputs.exists == 'true' }}
+        run: exit 1
+
       - name: Check out the repo
         uses: actions/checkout@v4
+
+      - name: Replace version in compose
+        uses: richardrigutins/replace-in-files@v2
+        if: ${{ steps.check.outputs.exists == 'false' }}
+        with:
+          files: 'Dockerfile'
+          search-text: '${LODESTAR_VERSION}'
+          replacement-text: ${{ steps.base.outputs.release }}
+
+      - name: Commit files
+        if: ${{ steps.check.outputs.exists == 'false' }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -a -m "Update dockerfile to ${{ steps.base.outputs.release }}"
+          
+      - name: Push changes to main
+        if: ${{ steps.check.outputs.exists == 'false' }}
+        uses: ad-m/github-push-action@master
+        with:
+          branch: "main"
+          force: true
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -34,7 +73,7 @@ jobs:
           images: |
             ghcr.io/${{ github.repository }}/lodestar-validator
           tags: |
-            type=sha,format=short,value=${{ github.sha }}
+            type=sha,format=short,value=${{ steps.base.outputs.release }}
 
       - name: Build and push Lodestar Validator
         id: push
@@ -53,3 +92,12 @@ jobs:
           subject-name: ghcr.io/${{ github.repository }}/lodestar-validator
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
+
+      - name: Create Release
+        id: create-release
+        uses: action-pack/github-release@v2
+        if: ${{ steps.check.outputs.exists == 'false' }}
+        with:
+          tag: ${{ steps.base.outputs.release }}
+          title: Upstream-${{ steps.base.outputs.release }}
+          body: ${{ steps.base.outputs.description }}
