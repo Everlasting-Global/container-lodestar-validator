@@ -31,9 +31,11 @@ jobs:
         with: 
           tag: ${{ steps.base.outputs.release }}
 
-      - name: Set exit code for exists
+      - name: Exit if tag exists
         if: ${{ steps.check.outputs.exists == 'true' }}
-        run: exit 1
+        run: |
+          echo "Update dockerfile to ${{ steps.base.outputs.release }} already exists" 
+          exit 0
 
       - name: Check out the repo
         uses: actions/checkout@v4
