@@ -12,7 +12,7 @@ fi
 
 if [[ $IMPORT_KEYS == "true" ]];
 then
-  for f in /home/charon/validator_keys/keystore-*.json; do
+  for f in /opt/data/validator_keys/keystore-*.json; do
     echo "Importing key ${f}"
 
     # Import keystore with password.
