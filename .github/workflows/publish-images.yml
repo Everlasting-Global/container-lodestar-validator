@@ -35,7 +35,7 @@ jobs:
         if: ${{ steps.check.outputs.exists == 'true' }}
         run: |
           echo "Update dockerfile to ${{ steps.base.outputs.release }} already exists" 
-          exit 0
+          exit 1
 
       - name: Check out the repo
         uses: actions/checkout@v4
