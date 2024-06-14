@@ -38,20 +38,21 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
-      - name: Replace version in compose
-        uses: richardrigutins/replace-in-files@v2
-        if: ${{ steps.check.outputs.exists == 'false' }}
+      # Create a new dockerfile from template with new version
+      - id: sub
+        uses: bluwy/substitute-string-action@v3
         with:
-          files: 'Dockerfile'
-          search-text: '${LODESTAR_VERSION}'
-          replacement-text: ${{ steps.base.outputs.release }}
+          _input-file: Dockerfile.template
+          _output-file: Dockerfile
+          LODESTAR_VERSION: ${{ steps.base.outputs.release }}
 
-      - name: Commit files
+      - name: Commit dockerfile
         if: ${{ steps.check.outputs.exists == 'false' }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git commit -a -m "Update dockerfile to ${{ steps.base.outputs.release }}"
+          git add Dockerfile
+          git commit -m "Update dockerfile to ${{ steps.base.outputs.release }}"
           
       - name: Push changes to main
         if: ${{ steps.check.outputs.exists == 'false' }}
