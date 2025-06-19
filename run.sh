@@ -30,7 +30,7 @@ fi
 
 echo "Imported all keys"
 
-if [[ $DISTRIBUTED == "true"]];
+if [[ $DISTRIBUTED == "true" ]];
 then
   exec node /usr/app/packages/cli/bin/lodestar validator \
       --dataDir="/opt/data" \
@@ -41,7 +41,7 @@ then
       --beaconNodes="$BEACON_NODE_ADDRESS" \
       --builder="$BUILDER_API_ENABLED" \
       --builder.selection="$BUILDER_SELECTION" \
-      --distributed \  
+      --distributed \
       --useProduceBlockV3=false
       
 else
