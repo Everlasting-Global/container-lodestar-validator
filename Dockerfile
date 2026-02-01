@@ -1,4 +1,4 @@
-FROM chainsafe/lodestar:v1.38.0
+FROM chainsafe/lodestar:v1.39.1
 
 COPY ./run.sh /opt/lodestar/run.sh
 
