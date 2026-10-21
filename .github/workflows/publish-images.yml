@@ -2,6 +2,19 @@ name: Publish images
 
 on:
   workflow_dispatch:
+    inputs:
+      rebuild:
+        description: 'Rebuild and re-publish the image for an existing Lodestar release (no PR, no GitHub release)'
+        type: boolean
+        default: true
+      lodestar_version:
+        description: 'Lodestar release tag to rebuild, e.g. v1.50.0 (empty = latest upstream release)'
+        type: string
+        default: ''
+      node_image:
+        description: 'Node.js image whose node binary replaces the one in the Lodestar image'
+        type: string
+        default: 'node:24-slim'
   schedule:
     - cron: '0 0 * * 0' # every Sunday at midnight
 
@@ -25,15 +38,21 @@ jobs:
           repository: ChainSafe/lodestar
           excludes: prerelease, draft
       
+      # Release to build: manual input if given, otherwise the latest upstream release
+      - id: version
+        run: |
+          echo "release=${{ inputs.lodestar_version || steps.base.outputs.release }}" >> "$GITHUB_OUTPUT"
+          echo "rebuild=${{ github.event_name == 'workflow_dispatch' && inputs.rebuild }}" >> "$GITHUB_OUTPUT"
+
       - uses: action-pack/tag-exists@v1
         id: check
         with: 
-          tag: ${{ steps.base.outputs.release }}
+          tag: ${{ steps.version.outputs.release }}
 
       - name: Exit if tag exists
-        if: ${{ steps.check.outputs.exists == 'true' }}
+        if: ${{ steps.check.outputs.exists == 'true' && steps.version.outputs.rebuild != 'true' }}
         run: |
-          echo "Update dockerfile to ${{ steps.base.outputs.release }} already exists" 
+          echo "Update dockerfile to ${{ steps.version.outputs.release }} already exists" 
           exit 1
 
       - name: Check out the repo
@@ -45,19 +64,19 @@ jobs:
         with:
           _input-file: Dockerfile.template
           _output-file: Dockerfile
-          LODESTAR_VERSION: ${{ steps.base.outputs.release }}
+          LODESTAR_VERSION: ${{ steps.version.outputs.release }}
 
       - name: Create Pull Request
-        if: ${{ steps.check.outputs.exists == 'false' }}
+        if: ${{ steps.check.outputs.exists == 'false' && steps.version.outputs.rebuild != 'true' }}
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: update-lodestar-${{ steps.base.outputs.release }}
-          title: "Update Lodestar to ${{ steps.base.outputs.release }}"
+          branch: update-lodestar-${{ steps.version.outputs.release }}
+          title: "Update Lodestar to ${{ steps.version.outputs.release }}"
           body: |
             ## Automated Update
             
-            This PR updates the Lodestar version to **${{ steps.base.outputs.release }}**.
+            This PR updates the Lodestar version to **${{ steps.version.outputs.release }}**.
             
             ### Changes
             - Updated Dockerfile with new Lodestar version
@@ -68,7 +87,7 @@ jobs:
             
             ---
             *This PR was automatically created by the CI/CD workflow*
-          commit-message: "Update dockerfile to ${{ steps.base.outputs.release }}"
+          commit-message: "Update dockerfile to ${{ steps.version.outputs.release }}"
           delete-branch: true
           labels: |
             automated
@@ -76,7 +95,7 @@ jobs:
             lodestar-update
 
       - name: Auto-merge Pull Request
-        if: ${{ steps.check.outputs.exists == 'false' }}
+        if: ${{ steps.check.outputs.exists == 'false' && steps.version.outputs.rebuild != 'true' }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -84,7 +103,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              head: context.repo.owner + ':update-lodestar-' + '${{ steps.base.outputs.release }}'
+              head: context.repo.owner + ':update-lodestar-' + '${{ steps.version.outputs.release }}'
             });
             
             if (pullRequests.length > 0) {
@@ -112,7 +131,8 @@ jobs:
           images: |
             ghcr.io/${{ github.repository }}/lodestar-validator
           tags: |
-            type=raw,value=${{ steps.base.outputs.release }}
+            type=raw,value=${{ steps.version.outputs.release }}
+            type=raw,value=${{ steps.version.outputs.release }}-r${{ github.run_number }},enable=${{ steps.version.outputs.rebuild == 'true' }}
 
       - name: Build and push Lodestar Validator
         id: push
@@ -120,7 +140,10 @@ jobs:
         with:
           context: .
           push: true
+          pull: true
           file: Dockerfile
+          build-args: |
+            NODE_IMAGE=${{ inputs.node_image || 'node:24-slim' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           
@@ -135,8 +158,8 @@ jobs:
       - name: Create Release
         id: create-release
         uses: action-pack/github-release@v2
-        if: ${{ steps.check.outputs.exists == 'false' }}
+        if: ${{ steps.check.outputs.exists == 'false' && steps.version.outputs.rebuild != 'true' }}
         with:
-          tag: ${{ steps.base.outputs.release }}
-          title: Upstream-${{ steps.base.outputs.release }}
+          tag: ${{ steps.version.outputs.release }}
+          title: Upstream-${{ steps.version.outputs.release }}
           body: ${{ steps.base.outputs.description }}
