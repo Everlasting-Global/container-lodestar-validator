@@ -10,4 +10,7 @@ COPY ./run.sh /opt/lodestar/run.sh
 
 RUN chmod +x /opt/lodestar/run.sh
 
-ENTRYPOINT /opt/lodestar/run.sh
+# Same entrypoint as the upstream image, so the image can run any Lodestar
+# command (beacon, validator, ...). The validator startup script is still
+# shipped; use `entrypoint: /opt/lodestar/run.sh` to run it.
+ENTRYPOINT ["node", "./packages/cli/bin/lodestar"]
