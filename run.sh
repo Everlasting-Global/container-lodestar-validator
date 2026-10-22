@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 BUILDER_SELECTION="executiononly"
 IMPORT_KEYS="true"
