@@ -30,7 +30,7 @@ The container is built using `Dockerfile.template` which:
 
 - Uses the official Lodestar image as base
 - Copies the custom `run.sh` script
-- Sets the script as the entrypoint
+- Ships the script at `/opt/lodestar/run.sh`. The image keeps the upstream entrypoint (`node ./packages/cli/bin/lodestar`), so it can also run a beacon node. To use the startup script, set `entrypoint: /opt/lodestar/run.sh`
 
 ### 2. Startup Process
 
