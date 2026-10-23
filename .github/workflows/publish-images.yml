@@ -56,11 +56,11 @@ jobs:
           exit 1
 
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Create a new dockerfile from template with new version
       - id: sub
-        uses: bluwy/substitute-string-action@v3
+        uses: bluwy/substitute-string-action@v4
         with:
           _input-file: Dockerfile.template
           _output-file: Dockerfile
@@ -68,7 +68,7 @@ jobs:
 
       - name: Create Pull Request
         if: ${{ steps.check.outputs.exists == 'false' && steps.version.outputs.rebuild != 'true' }}
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: update-lodestar-${{ steps.version.outputs.release }}
@@ -96,7 +96,7 @@ jobs:
 
       - name: Auto-merge Pull Request
         if: ${{ steps.check.outputs.exists == 'false' && steps.version.outputs.rebuild != 'true' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const { data: pullRequests } = await github.rest.pulls.list({
@@ -118,7 +118,7 @@ jobs:
             }
 
       - name: Log in to the Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -126,7 +126,7 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/${{ github.repository }}/lodestar-validator
@@ -136,7 +136,7 @@ jobs:
 
       - name: Build and push Lodestar Validator
         id: push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -148,7 +148,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           
       - name: attest
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v4
         id: attest
         with:
           subject-name: ghcr.io/${{ github.repository }}/lodestar-validator
