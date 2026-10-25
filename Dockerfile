@@ -3,7 +3,7 @@
 ARG NODE_IMAGE=node:24-slim
 FROM ${NODE_IMAGE} AS patched-node
 
-FROM chainsafe/lodestar:v1.50.0
+FROM chainsafe/lodestar:v1.50.1
 
 COPY --from=patched-node /usr/local/bin/node /usr/local/bin/node
 COPY ./run.sh /opt/lodestar/run.sh
