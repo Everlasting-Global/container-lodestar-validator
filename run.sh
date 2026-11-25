@@ -41,8 +41,7 @@ then
       --beaconNodes="$BEACON_NODE_ADDRESS" \
       --builder="$BUILDER_API_ENABLED" \
       --builder.selection="$BUILDER_SELECTION" \
-      --distributed \
-      --useProduceBlockV3=false
+      --distributed
       
 else
 
@@ -55,7 +54,6 @@ else
       --beaconNodes="$BEACON_NODE_ADDRESS" \
       --builder="$BUILDER_API_ENABLED" \
       --builder.selection="$BUILDER_SELECTION" \
-      --useProduceBlockV3=false \
       --suggestedFeeRecipient="$FEE_RECIPIENT" \
       --graffiti="$GRAFFITI" 
 
